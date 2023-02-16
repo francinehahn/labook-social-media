@@ -1,5 +1,5 @@
 import { CustomError } from "../errors/CustomError"
-import { CantAddFriend, CantDeleteFriend, DuplicateEmail, DuplicateId, EmailNotFound, FriendIdNotFound, IncorrectPassword, MissingEmail, MissingFriendId, MissingName, MissingPassword, MissingSearchTerm, MissingToken, MissingUserId, NoFriendsFound, NoUsersFound, UserIdNotFound } from "../errors/UserError"
+import { CantAddFriend, CantDeleteFriend, DuplicateEmail, DuplicateId, EmailNotFound, FriendIdNotFound, IncorrectPassword, InvalidEmail, InvalidPassword, MissingEmail, MissingFriendId, MissingName, MissingPassword, MissingSearchTerm, MissingToken, MissingUserId, NoFriendsFound, NoUsersFound, UserIdNotFound } from "../errors/UserError"
 import { deleteFriendDTO, friend, getFriendsByUserIdDTO, inputFriendDataDTO } from "../models/friend"
 import { user, inputUserDTO, inputLoginDTO, inputSearchUsersDTO } from "../models/user"
 import { Authenticator } from "../services/Authenticator"
@@ -24,9 +24,17 @@ export class UserBusiness {
             if (!input.password) {
                 throw new MissingEmail()
             }
+
+            if (input.password.length < 6) {
+                throw new InvalidPassword()
+            }
+
+            if (!input.email.includes("@")) {
+                throw new InvalidEmail()
+            }
      
             const duplicateEmail = await this.userDatabase.getUserByEmail(input.email)
-            if (duplicateEmail.length > 0) {
+            if (duplicateEmail) {
                 throw new DuplicateEmail()
             }
 

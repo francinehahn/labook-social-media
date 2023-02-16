@@ -51,7 +51,8 @@ export class UserDatabase extends BaseDatabase implements UserRepository {
 
     getUserByEmail = async (email: string): Promise<any> => {
         try {
-            return await BaseDatabase.connection(this.TABLE).select().where({email})
+            const result = await BaseDatabase.connection(this.TABLE).select().where({email})
+            return result[0]
      
         } catch (error:any) {
             throw new CustomError(error.statusCode, error.message)

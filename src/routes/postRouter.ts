@@ -11,7 +11,7 @@ const userDatabase = new UserDatabase()
 const postBusiness = new PostBusiness(postDatabase, userDatabase)
 const postController = new PostController(postBusiness)
 
-postRouter.post("/", (req, res) => postController.createPost(req, res))
+postRouter.post("/create", (req, res) => postController.createPost(req, res))
 postRouter.get("/", (req, res) => postController.getAllPosts(req, res))
 
 postRouter.get("/:postId", (req, res) => postController.getPostById(req, res))

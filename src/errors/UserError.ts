@@ -24,6 +24,12 @@ export class MissingEmail extends CustomError {
     }
 }
 
+export class InvalidEmail extends CustomError {
+    constructor () {
+        super(422, "Invalid email.")
+    }
+}
+
 export class EmailNotFound extends CustomError {
     constructor () {
         super(404, "Email not found.")
@@ -33,6 +39,12 @@ export class EmailNotFound extends CustomError {
 export class MissingPassword extends CustomError {
     constructor () {
         super(422, "Provide the password.")
+    }
+}
+
+export class InvalidPassword extends CustomError {
+    constructor () {
+        super(422, "The password must have at least 6 characters.")
     }
 }
 

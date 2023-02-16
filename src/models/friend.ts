@@ -5,6 +5,16 @@ export type friend = {
 }
 
 export interface inputFriendDataDTO {
-    userId: string,
+    friendId: string,
+    token: string
+}
+
+export interface deleteFriendDTO {
+    id: string,
     friendId: string
+}
+
+export interface getFriendsByUserIdDTO {
+    userId: string,
+    token: string
 }

@@ -1,14 +1,12 @@
-# Rede Social labook5
-This API Rest was developed to simulate a social media and to practice data architecture, typescript, node.js, mySQL, custom errors.
+# Social Media - Labook
+This API Rest was developed to simulate a social media and to practice data architecture, typescript, node.js, mySQL, custom errors, authentication and cryptography.
 
 ## Documentation
 https://documenter.getpostman.com/view/22375317/2s935mr528
 
-## Deploy
-https://barros-labook5.onrender.com
-
 ## Endpoints
-- Create User
+- Signup
+- Login
 - Add User As A Friend
 - Delete User As A Friend
 - Search Users
@@ -29,8 +27,41 @@ https://barros-labook5.onrender.com
 - Express.js
 - MySQL
 
-## Running the project
-- git clone https://github.com/future4code/Barros-labook5
-- cd Barros-labook5
-- npm install
-- npm run start
+## 🛰Running the project
+<pre>
+  <code>git clone https://github.com/francinehahn/labook-social-media.git</code>
+</pre>
+
+<pre>
+  <code>cd labook-social-media</code>
+</pre>
+
+<pre>
+  <code>npm install</code>
+</pre>
+
+Create a file .env and complete the following variables:
+<pre>
+  <code>
+    DB_HOST = ""
+    DB_USER = ""
+    DB_PASS = ""
+    DB_NAME = ""
+
+    PORT = 3003
+    BCRYPT_COST = 12
+    JWT_KEY = "labook"
+  </code>
+</pre>
+
+To add the tables to your database, run the following command:
+<pre>
+  <code>npm run migrations</code>
+</pre>
+
+To initialize the project:
+<pre>
+  <code>npm run start</code>
+</pre>
+
+Finally, you can use Postman or another similar tool to test the endpoints.

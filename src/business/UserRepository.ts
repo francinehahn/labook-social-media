@@ -1,10 +1,11 @@
-import { friend, inputFriendDataDTO } from "../models/friend"
+import { deleteFriendDTO, friend } from "../models/friend"
 import { user } from "../models/user"
 
+
 export interface UserRepository {
-    createUser (newUser: user): Promise<void>
+    signup (newUser: user): Promise<void>
     addAfriend (input: friend): Promise<void>
-    deleteAfriend (input: inputFriendDataDTO): Promise<void>
+    deleteAfriend (deleteFriend: deleteFriendDTO): Promise<void>
     getUserByEmail (email: string): Promise<any>
     getUserById (id: string): Promise<any>
     getFriendsByUserId (item: any): Promise<any>

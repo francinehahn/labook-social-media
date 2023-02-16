@@ -1,15 +1,17 @@
 import { CustomError } from "../errors/CustomError"
-import { CantAddFriend, CantDeleteFriend, DuplicateEmail, DuplicateId, FriendIdNotFound, MissingEmail, MissingFriendId, MissingName, MissingSearchTerm, MissingUserId, NoFriendsFound, NoUsersFound, UserIdNotFound } from "../errors/UserError"
-import { friend, inputFriendDataDTO } from "../models/friend"
-import { user, inputUserDTO } from "../models/user"
+import { CantAddFriend, CantDeleteFriend, DuplicateEmail, DuplicateId, EmailNotFound, FriendIdNotFound, IncorrectPassword, MissingEmail, MissingFriendId, MissingName, MissingPassword, MissingSearchTerm, MissingToken, MissingUserId, NoFriendsFound, NoUsersFound, UserIdNotFound } from "../errors/UserError"
+import { deleteFriendDTO, friend, getFriendsByUserIdDTO, inputFriendDataDTO } from "../models/friend"
+import { user, inputUserDTO, inputLoginDTO, inputSearchUsersDTO } from "../models/user"
+import { Authenticator } from "../services/Authenticator"
 import { generateId } from "../services/generateId"
+import { HashManager } from "../services/HashManager"
 import { UserRepository } from "./UserRepository"
 
 
 export class UserBusiness {
     constructor(private userDatabase: UserRepository){}
 
-    createUser = async (input: inputUserDTO): Promise<void> => {
+    signup = async (input: inputUserDTO): Promise<string> => {
         try {
             if (!input.name) {
                 throw new MissingName()
@@ -28,15 +30,23 @@ export class UserBusiness {
                 throw new DuplicateEmail()
             }
 
+            const hashManager = new HashManager()
+            const hashPassword: string = await hashManager.generateHash(input.password)
+
             const id = generateId()
             const newUser: user = {
                 id,
                 name: input.name,
                 email: input.email,
-                password: input.password
+                password: hashPassword
             }
 
-            await this.userDatabase.createUser(newUser)
+            await this.userDatabase.signup(newUser)
+
+            const authenticator = new Authenticator()
+            const token = await authenticator.generateToken({id})
+            
+            return token
      
         } catch (error:any) {
            throw new CustomError(error.statusCode, error.message)
@@ -44,41 +54,72 @@ export class UserBusiness {
     }
 
 
+    login = async (input: inputLoginDTO): Promise<string> => {
+        try {
+            if (!input.email) {
+                throw new MissingEmail()
+            }
+            if (!input.password) {
+                throw new MissingPassword()
+            }
+    
+            const emailExists = await this.userDatabase.getUserByEmail(input.email)
+            
+            if (!emailExists) {
+                throw new EmailNotFound()
+            }
+        
+            const hashManager = new HashManager()
+            const comparePassword = await hashManager.compareHash(input.password, emailExists.password)
+
+            if (!comparePassword) {
+                throw new IncorrectPassword()
+            }
+            
+            const authenticator = new Authenticator()
+            const token = await authenticator.generateToken({id: emailExists.id})
+            
+            return token
+    
+        } catch (err: any) {
+            throw new CustomError(err.statusCode, err.message)
+        }
+    }
+
+
     addAfriend = async (input: inputFriendDataDTO): Promise<void> => {
         try {
-            if (input.userId === ":userId") {
-                throw new MissingUserId()
+            if (!input.token) {
+                throw new MissingToken()
             }
+
+            const authenticator = new Authenticator()
+            const {id} = await authenticator.getTokenData(input.token)
 
             if (!input.friendId) {
                 throw new MissingFriendId()
             }
 
-            if (input.userId === input.friendId) {
-                throw new DuplicateId()
-            }
-
-            const userIdExists = await this.userDatabase.getUserById(input.userId)
-            if (!userIdExists) {
-                throw new UserIdNotFound()
-            }
-
-            const friendIdExists = await this.userDatabase.getUserById(input.friendId)
-            if (!friendIdExists) {
+            const friendExists = await this.userDatabase.getUserById(input.friendId)
+            if (!friendExists) {
                 throw new FriendIdNotFound()
             }
 
-            const userFriends = await this.userDatabase.getFriendsByUserId({user_id: input.userId, friend_id: input.friendId})
-            const friendFriends = await this.userDatabase.getFriendsByUserId({user_id: input.friendId, friend_id: input.userId})
+            if (id === input.friendId) {
+                throw new DuplicateId()
+            }
+
+            const userFriends = await this.userDatabase.getFriendsByUserId({user_id: id, friend_id: input.friendId})
+            const friendFriends = await this.userDatabase.getFriendsByUserId({user_id: input.friendId, friend_id: id})
             
             if (userFriends.length > 0 || friendFriends.length > 0) {
                 throw new CantAddFriend()
             }
 
-            const id = generateId()
+            const friendsId = generateId()
             const newFriend: friend = {
-                id,
-                user_id: input.userId,
+                id: friendsId,
+                user_id: id,
                 friend_id: input.friendId
             }
 
@@ -92,21 +133,19 @@ export class UserBusiness {
 
     deleteAfriend = async (input: inputFriendDataDTO): Promise<void> => {
         try {
-            if (input.userId === ":userId") {
-                throw new MissingUserId()
+            if (!input.token) {
+                throw new MissingToken()
             }
+
+            const authenticator = new Authenticator()
+            const {id} = await authenticator.getTokenData(input.token)
 
             if (!input.friendId) {
                 throw new MissingFriendId()
             }
 
-            if (input.userId === input.friendId) {
+            if (id === input.friendId) {
                 throw new DuplicateId()
-            }
-
-            const userIdExists = await this.userDatabase.getUserById(input.userId)
-            if (!userIdExists) {
-                throw new UserIdNotFound()
             }
 
             const friendIdExists = await this.userDatabase.getUserById(input.friendId)
@@ -114,14 +153,19 @@ export class UserBusiness {
                 throw new FriendIdNotFound()
             }
 
-            const userFriends = await this.userDatabase.getFriendsByUserId({user_id: input.userId, friend_id: input.friendId})
-            const friendFriends = await this.userDatabase.getFriendsByUserId({user_id: input.friendId, friend_id: input.userId})
+            const userFriends = await this.userDatabase.getFriendsByUserId({user_id: id, friend_id: input.friendId})
+            const friendFriends = await this.userDatabase.getFriendsByUserId({user_id: input.friendId, friend_id: id})
        
             if (userFriends.length === 0 && friendFriends.length === 0) {
                 throw new CantDeleteFriend()
             }
 
-            await this.userDatabase.deleteAfriend(input)
+            const deleteFriend: deleteFriendDTO = {
+                id,
+                friendId: input.friendId
+            }
+
+            await this.userDatabase.deleteAfriend(deleteFriend)
      
         } catch (error:any) {
             throw new CustomError(error.statusCode, error.message)
@@ -129,22 +173,29 @@ export class UserBusiness {
     }
 
 
-    getFriendsByUserId = async (userId: string): Promise<user[]> => {
+    getFriendsByUserId = async (input: getFriendsByUserIdDTO): Promise<user[]> => {
         try {
-            if (userId === ":userId") {
+            if (!input.token) {
+                throw new MissingToken()
+            }
+
+            const authenticator = new Authenticator()
+            await authenticator.getTokenData(input.token)
+
+            if (input.userId === ":userId") {
                 throw new MissingUserId()
             }
 
-            const userIdExists = await this.userDatabase.getUserById(userId)
+            const userIdExists = await this.userDatabase.getUserById(input.userId)
             if (!userIdExists) {
                 throw new UserIdNotFound()
             }
 
             const result: user[] = []
-            let userFriends = await this.userDatabase.getFriendsByUserId({user_id: userId})
+            let userFriends = await this.userDatabase.getFriendsByUserId({user_id: input.userId})
             userFriends.length !== 0? result.push(...userFriends) : result.push()
             
-            userFriends = await this.userDatabase.getFriendsByUserId({friend_id: userId})
+            userFriends = await this.userDatabase.getFriendsByUserId({friend_id: input.userId})
             userFriends.length !== 0? result.push(...userFriends) : result.push()
 
             if (result.length === 0) {
@@ -159,13 +210,20 @@ export class UserBusiness {
     }
 
 
-    searchUsers = async (search: string): Promise<user[]> => {
+    searchUsers = async (input: inputSearchUsersDTO): Promise<user[]> => {
         try {
-            if (!search) {
+            if (!input.token) {
+                throw new MissingToken()
+            }
+
+            const authenticator = new Authenticator()
+            await authenticator.getTokenData(input.token)
+
+            if (!input.search) {
                 throw new MissingSearchTerm()
             }
 
-            const result = await this.userDatabase.searchUsers(search)
+            const result = await this.userDatabase.searchUsers(input.search)
             if (result.length === 0) {
                 throw new NoUsersFound()
             }

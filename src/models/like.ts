@@ -5,6 +5,16 @@ export type like = {
 }
 
 export interface inputLikePostDTO {
-    userId: string,
+    postId: string,
+    token: string
+}
+
+export interface inputDeslikePostDTO {
+    postId: string,
+    token: string
+}
+
+export interface deleteLikeDTO {
+    id: string,
     postId: string
 }

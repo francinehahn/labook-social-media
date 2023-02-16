@@ -1,12 +1,13 @@
-import { post, inputPostDTO, inputGetAllPostsDTO, feedPaginationDTO } from "../models/post"
+import { post, inputPostDTO, inputGetAllPostsDTO, feedPaginationDTO, inputGetPostByIdDTO } from "../models/post"
 import { generateId } from "../services/generateId"
 import { PostRepository } from "./PostRepository"
 import { UserRepository } from "./UserRepository"
-import { inputLikePostDTO, like } from "../models/like"
-import { comment, inputCommentDTO } from "../models/comment"
+import { deleteLikeDTO, inputDeslikePostDTO, inputLikePostDTO, like } from "../models/like"
+import { comment, inputCommentDTO, inputGetCommentsDTO } from "../models/comment"
 import { CustomError } from "../errors/CustomError"
-import { DuplicateLike, InvalidDeslike, InvalidPostType, MissingAuthorId, MissingComment, MissingDescription, MissingPhotoUrl, MissingPostId, MissingPostType, NoCommentsFound, NoLikesFound, PostIdNotFound } from "../errors/PostError"
-import { MissingUserId, UserIdNotFound } from "../errors/UserError"
+import { DuplicateLike, InvalidDeslike, InvalidPostType, MissingComment, MissingDescription, MissingPhotoUrl, MissingPostId, MissingPostType, NoCommentsFound, NoLikesFound, PostIdNotFound } from "../errors/PostError"
+import { MissingToken, MissingUserId, UserIdNotFound } from "../errors/UserError"
+import { Authenticator } from "../services/Authenticator"
 
 
 export class PostBusiness {
@@ -14,9 +15,12 @@ export class PostBusiness {
 
     createPost = async (input: inputPostDTO): Promise<void> => {
         try {
-            if (!input.authorId) {
-                throw new MissingAuthorId()
+            if (!input.token) {
+                throw new MissingToken()
             }
+
+            const authenticator = new Authenticator()
+            const {id} = await authenticator.getTokenData(input.token)
 
             if (!input.description) {
                 throw new MissingDescription()
@@ -34,19 +38,14 @@ export class PostBusiness {
                 throw new InvalidPostType()
             }
 
-            const userIdExists = await this.userDatabase.getUserById(input.authorId)
-            if (!userIdExists) {
-                throw new UserIdNotFound()
-            }
-
-            const id: string = generateId()
+            const postId: string = generateId()
             const newPost: post = {
-                id,
+                id: postId,
                 photo: input.photo,
                 description: input.description,
                 type: input.type,
                 created_at: new Date(),
-                author_id: input.authorId
+                author_id: id
             }
 
             await this.postDatabase.createPost(newPost)
@@ -58,13 +57,20 @@ export class PostBusiness {
     }
 
 
-    getPostById = async (postId: string): Promise<post> => {
+    getPostById = async (input: inputGetPostByIdDTO): Promise<post> => {
         try {
-            if (postId === ":postId") {
+            if (!input.token) {
+                throw new MissingToken()
+            }
+
+            const authenticator = new Authenticator()
+            await authenticator.getTokenData(input.token)
+
+            if (input.postId === ":postId") {
                 throw new MissingPostId()
             }
             
-            const result = await this.postDatabase.getPostById(postId)
+            const result = await this.postDatabase.getPostById(input.postId)
 
             if (!result) {
                 throw new PostIdNotFound()
@@ -80,6 +86,13 @@ export class PostBusiness {
 
     getAllPosts = async (input: inputGetAllPostsDTO): Promise<post[]> => {
         try {
+            if (!input.token) {
+                throw new MissingToken()
+            }
+
+            const authenticator = new Authenticator()
+            await authenticator.getTokenData(input.token)
+
             if (!input.page) {
                 input.page = 1
             }
@@ -104,16 +117,15 @@ export class PostBusiness {
 
     likeApost = async (input: inputLikePostDTO): Promise<void> => {
         try {
-            if (!input.userId) {
-                throw new MissingUserId()
+            if (!input.token) {
+                throw new MissingToken()
             }
+
+            const authenticator = new Authenticator()
+            const {id} = await authenticator.getTokenData(input.token)
+
             if (input.postId === ":postId") {
                 throw new MissingPostId()
-            }
-            
-            const userIdExists = await this.userDatabase.getUserById(input.userId)
-            if (!userIdExists) {
-                throw new UserIdNotFound()
             }
 
             const postIdExists = await this.postDatabase.getPostById(input.postId)
@@ -121,16 +133,16 @@ export class PostBusiness {
                 throw new PostIdNotFound()
             }
 
-            const duplicateLike = await this.postDatabase.getLikesByUserId(input.userId)
+            const duplicateLike = await this.postDatabase.getLikesByUserId(id)
             const filterDuplicatLike = duplicateLike.filter((item: like) => item.post_id === input.postId)
             if (filterDuplicatLike.length > 0) {
                 throw new DuplicateLike()
             }
 
-            const id = generateId()
+            const likeId = generateId()
             const newLike: like = {
-                id,
-                user_id: input.userId,
+                id: likeId,
+                user_id: id,
                 post_id: input.postId
             }
 
@@ -142,18 +154,17 @@ export class PostBusiness {
     }
 
 
-    deslikeApost = async (input: inputLikePostDTO): Promise<void> => {
+    deslikeApost = async (input: inputDeslikePostDTO): Promise<void> => {
         try {
-            if (!input.userId) {
-                throw new MissingUserId()
+            if (!input.token) {
+                throw new MissingToken()
             }
+
+            const authenticator = new Authenticator()
+            const {id} = await authenticator.getTokenData(input.token)
+
             if (input.postId === ":postId") {
                 throw new MissingPostId()
-            }
-            
-            const userIdExists = await this.userDatabase.getUserById(input.userId)
-            if (!userIdExists) {
-                throw new UserIdNotFound()
             }
 
             const postIdExists = await this.postDatabase.getPostById(input.postId)
@@ -161,13 +172,18 @@ export class PostBusiness {
                 throw new PostIdNotFound()
             }
 
-            const getLikesByUserId = await this.postDatabase.getLikesByUserId(input.userId)
+            const getLikesByUserId = await this.postDatabase.getLikesByUserId(id)
             const filterLikes = getLikesByUserId.filter((item: like) => item.post_id === input.postId)
             if (filterLikes.length === 0) {
                 throw new InvalidDeslike()
             }
 
-            await this.postDatabase.deslikeApost(input)
+            const deleteLike: deleteLikeDTO = {
+                id,
+                postId: input.postId
+            }
+
+            await this.postDatabase.deslikeApost(deleteLike)
 
         } catch (error:any) {
             throw new CustomError(error.statusCode, error.message)
@@ -175,18 +191,25 @@ export class PostBusiness {
     }
 
 
-    getLikesByPostId = async (postId: string): Promise<like[]> => {
+    getLikesByPostId = async (input: inputLikePostDTO): Promise<like[]> => {
         try {
-            if (postId === ":postId") {
+            if (!input.token) {
+                throw new MissingToken()
+            }
+
+            const authenticator = new Authenticator()
+            await authenticator.getTokenData(input.token)
+
+            if (input.postId === ":postId") {
                 throw new MissingPostId()
             }
 
-            const postIdExists = await this.postDatabase.getPostById(postId)
+            const postIdExists = await this.postDatabase.getPostById(input.postId)
             if (!postIdExists) {
                 throw new PostIdNotFound()
             }
 
-            const result = await this.postDatabase.getLikesByPostId(postId)
+            const result = await this.postDatabase.getLikesByPostId(input.postId)
             if (result.length === 0) {
                 throw new NoLikesFound()
             }
@@ -201,19 +224,18 @@ export class PostBusiness {
 
     commentOnPost = async (input: inputCommentDTO): Promise<void> => {
         try {
+            if (!input.token) {
+                throw new MissingToken()
+            }
+
+            const authenticator = new Authenticator()
+            const {id} = await authenticator.getTokenData(input.token)
+
             if (!input.comment) {
                 throw new MissingComment()
             }
-            if (!input.userId) {
-                throw new MissingUserId()
-            }
             if (input.postId === ":postId") {
                 throw new MissingPostId()
-            }
-            
-            const userIdExists = await this.userDatabase.getUserById(input.userId)
-            if (!userIdExists) {
-                throw new UserIdNotFound()
             }
 
             const postIdExists = await this.postDatabase.getPostById(input.postId)
@@ -221,11 +243,11 @@ export class PostBusiness {
                 throw new PostIdNotFound()
             }
 
-            const id = generateId()
+            const commentId = generateId()
             const newComment: comment = {
-                id,
+                id: commentId,
                 comment: input.comment,
-                user_id: input.userId,
+                user_id: id,
                 post_id: input.postId
             }
 
@@ -237,18 +259,25 @@ export class PostBusiness {
     }
 
 
-    getCommentsByPostId = async (postId: string): Promise<comment[]> => {
+    getCommentsByPostId = async (input: inputGetCommentsDTO): Promise<comment[]> => {
         try {
-            if (postId === ":postId") {
+            if (!input.token) {
+                throw new MissingToken()
+            }
+
+            const authenticator = new Authenticator()
+            await authenticator.getTokenData(input.token)
+
+            if (input.postId === ":postId") {
                 throw new MissingPostId()
             }
 
-            const postIdExists = await this.postDatabase.getPostById(postId)
+            const postIdExists = await this.postDatabase.getPostById(input.postId)
             if (!postIdExists) {
                 throw new PostIdNotFound()
             }
 
-            const result = await this.postDatabase.getCommentsByPostId(postId)
+            const result = await this.postDatabase.getCommentsByPostId(input.postId)
             if (result.length === 0) {
                 throw new NoCommentsFound()
             }

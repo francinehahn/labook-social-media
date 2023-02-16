@@ -16,12 +16,18 @@ export interface inputPostDTO {
     photo: string,
     description: string,
     type: POST_TYPES,
-    authorId: string
+    token: string
 }
 
 export interface inputGetAllPostsDTO {
     page: number,
-    size: number
+    size: number,
+    token: string
+}
+
+export interface inputGetPostByIdDTO {
+    postId: string,
+    token: string
 }
 
 export interface feedPaginationDTO {

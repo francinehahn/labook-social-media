@@ -1,5 +1,16 @@
 import { CustomError } from "./CustomError"
 
+export class Unauthorized extends CustomError {
+    constructor () {
+        super(401, "Unauthorized user.")
+    }
+}
+
+export class MissingToken extends CustomError {
+    constructor () {
+        super(422, "Provide the token.")
+    }
+}
 
 export class MissingName extends CustomError {
     constructor () {
@@ -13,9 +24,21 @@ export class MissingEmail extends CustomError {
     }
 }
 
+export class EmailNotFound extends CustomError {
+    constructor () {
+        super(404, "Email not found.")
+    }
+}
+
 export class MissingPassword extends CustomError {
     constructor () {
         super(422, "Provide the password.")
+    }
+}
+
+export class IncorrectPassword extends CustomError {
+    constructor () {
+        super(422, "Incorrect password.")
     }
 }
 

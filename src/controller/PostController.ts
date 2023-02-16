@@ -1,8 +1,8 @@
 import { Request, Response } from "express"
 import { PostBusiness } from "../business/PostBusiness"
-import { inputGetAllPostsDTO, inputPostDTO } from "../models/post"
-import { inputLikePostDTO } from "../models/like"
-import { inputCommentDTO } from "../models/comment"
+import { inputGetAllPostsDTO, inputGetPostByIdDTO, inputPostDTO } from "../models/post"
+import { inputDeslikePostDTO, inputLikePostDTO } from "../models/like"
+import { inputCommentDTO, inputGetCommentsDTO } from "../models/comment"
 
 
 export class PostController {
@@ -14,11 +14,10 @@ export class PostController {
                 photo: req.body.photo,
                 description: req.body.description,
                 type: req.body.type,
-                authorId: req.body.authorId
+                token: req.headers.authorization as string
             }
             
             await this.postBusiness.createPost(input)
-        
             res.status(201).send("Success! The post has been posted.")
         
         } catch (error:any) {
@@ -29,9 +28,12 @@ export class PostController {
 
     getPostById = async (req: Request, res: Response): Promise<void> => {
         try {
-            const postId = req.params.postId
-            const result = await this.postBusiness.getPostById(postId)
+            const input: inputGetPostByIdDTO = {
+                postId: req.params.postId,
+                token: req.headers.authorization as string
+            }
 
+            const result = await this.postBusiness.getPostById(input)
             res.status(200).send(result)
      
         } catch (error:any) {
@@ -44,7 +46,8 @@ export class PostController {
         try {
             const input: inputGetAllPostsDTO = {
                 page: Number(req.query.page),
-                size: Number(req.query.size)
+                size: Number(req.query.size),
+                token: req.headers.authorization as string
             }
 
             const result = await this.postBusiness.getAllPosts(input)
@@ -59,8 +62,8 @@ export class PostController {
     likeApost = async (req: Request, res: Response): Promise<void> => {
         try {
             const input: inputLikePostDTO = {
-                userId: req.body.userId,
-                postId: req.params.postId
+                postId: req.params.postId,
+                token: req.headers.authorization as string
             }
 
             await this.postBusiness.likeApost(input)
@@ -74,9 +77,9 @@ export class PostController {
 
     deslikeApost = async (req: Request, res: Response): Promise<void> => {
         try {
-            const input: inputLikePostDTO = {
-                userId: req.body.userId,
-                postId: req.params.postId
+            const input: inputDeslikePostDTO = {
+                postId: req.params.postId,
+                token: req.headers.authorization as string
             }
 
             await this.postBusiness.deslikeApost(input)
@@ -90,9 +93,12 @@ export class PostController {
 
     getLikesByPostId = async (req: Request, res: Response): Promise<void> => {
         try {
-            const postId: string = req.params.postId
+            const input: inputLikePostDTO = {
+                postId: req.params.postId,
+                token: req.headers.authorization as string
+            }
 
-            const result = await this.postBusiness.getLikesByPostId(postId)
+            const result = await this.postBusiness.getLikesByPostId(input)
             res.status(200).send(result)
      
         } catch (error:any) {
@@ -105,8 +111,8 @@ export class PostController {
         try {
             const input: inputCommentDTO = {
                 comment: req.body.comment,
-                userId: req.body.userId,
-                postId: req.params.postId
+                postId: req.params.postId,
+                token: req.headers.authorization as string
             }
 
             await this.postBusiness.commentOnPost(input)
@@ -120,9 +126,12 @@ export class PostController {
 
     getCommentsByPostId = async (req: Request, res: Response): Promise<void> => {
         try {
-            const postId: string = req.params.postId
+            const input: inputGetCommentsDTO = {
+                postId: req.params.postId,
+                token: req.headers.authorization as string
+            }
 
-            const result = await this.postBusiness.getCommentsByPostId(postId)
+            const result = await this.postBusiness.getCommentsByPostId(input)
             res.status(200).send(result)
      
         } catch (error:any) {

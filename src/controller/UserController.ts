@@ -1,23 +1,22 @@
 import { Response, Request } from "express"
 import { UserBusiness } from "../business/UserBusiness"
 import { inputFriendDataDTO } from "../models/friend"
-import { inputUserDTO } from "../models/user"
+import { inputLoginDTO, inputSearchUsersDTO, inputUserDTO } from "../models/user"
 
 
 export class UserController {
     constructor(private userBusiness: UserBusiness) {}
 
-    createUser = async (req: Request, res: Response): Promise<void> => {
+    signup = async (req: Request, res: Response): Promise<void> => {
         try {
             const input: inputUserDTO = {
                 name: req.body.name,
                 email: req.body.email,
                 password: req.body.password
             }
-     
-            await this.userBusiness.createUser(input)
-            
-            res.status(201).send("Success! The user has been registered.")
+
+            const token = await this.userBusiness.signup(input)
+            res.status(201).send({message: 'Success! User has been registered!', token})
      
         } catch (error:any) {
            res.status(error.statusCode || 400).send(error.message || error.sqlMessage)
@@ -25,11 +24,27 @@ export class UserController {
     }
 
 
+    login = async (req: Request, res: Response): Promise<void> => {
+        try {
+            const input: inputLoginDTO = {
+                email: req.body.email,
+                password: req.body.password
+            }
+      
+            const token = await this.userBusiness.login(input)
+            res.status(201).send({token})
+    
+        } catch (err: any) {
+            res.status(err.statusCode || 400).send(err.message || err.sqlMessage)
+        }
+    }
+
+
     addAfriend = async (req: Request, res: Response): Promise<void> => {
         try {
             const input: inputFriendDataDTO = {
-                userId: req.params.userId,
-                friendId: req.body.friendId
+                friendId: req.body.friendId,
+                token: req.headers.authorization as string
             }
      
             await this.userBusiness.addAfriend(input)
@@ -45,8 +60,8 @@ export class UserController {
     deleteAfriend = async (req: Request, res: Response): Promise<void> => {
         try {
             const input: inputFriendDataDTO = {
-                userId: req.params.userId,
-                friendId: req.body.friendId
+                friendId: req.body.friendId,
+                token: req.headers.authorization as string
             }
 
             await this.userBusiness.deleteAfriend(input)
@@ -61,9 +76,12 @@ export class UserController {
 
     getFriendsByUserId = async (req: Request, res: Response): Promise<void> => {
         try {
-            const userId = req.params.userId
-            const result = await this.userBusiness.getFriendsByUserId(userId)
-            
+            const input = {
+                userId: req.params.userId,
+                token: req.headers.authorization as string
+            }
+
+            const result = await this.userBusiness.getFriendsByUserId(input)
             res.status(200).send(result)
      
         } catch (error:any) {
@@ -74,9 +92,12 @@ export class UserController {
     
     searchUsers = async (req: Request, res: Response): Promise<void> => {
         try {
-            const search = req.query.search as string
-            const result = await this.userBusiness.searchUsers(search)
-            
+            const input: inputSearchUsersDTO = {
+                search: req.query.search as string,
+                token: req.headers.authorization as string
+            }
+
+            const result = await this.userBusiness.searchUsers(input)
             res.status(200).send(result)
      
         } catch (error:any) {

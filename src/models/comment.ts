@@ -7,6 +7,11 @@ export type comment = {
 
 export interface inputCommentDTO {
     comment: string,
-    userId: string,
-    postId: string
+    postId: string,
+    token: string
+}
+
+export interface inputGetCommentsDTO {
+    postId: string,
+    token: string
 }

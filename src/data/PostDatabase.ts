@@ -2,7 +2,7 @@ import { PostRepository } from "../business/PostRepository"
 import { BaseDatabase } from "../data/BaseDatabase"
 import { CustomError } from "../errors/CustomError"
 import { comment } from "../models/comment"
-import { like, inputLikePostDTO } from "../models/like"
+import { like, inputLikePostDTO, inputDeslikePostDTO, deleteLikeDTO } from "../models/like"
 import { feedPaginationDTO, post } from "../models/post"
 
 
@@ -51,9 +51,9 @@ export class PostDatabase extends BaseDatabase implements PostRepository {
     }
 
 
-    deslikeApost = async (input: inputLikePostDTO): Promise<void> => {
+    deslikeApost = async (deleteLike: deleteLikeDTO): Promise<void> => {
         try {
-            await BaseDatabase.connection("labook_likes").where({user_id: input.userId, post_id: input.postId}).delete()
+            await BaseDatabase.connection("labook_likes").where({user_id: deleteLike.id, post_id: deleteLike.postId}).delete()
      
         } catch (error:any) {
             throw new CustomError(error.statusCode, error.message)

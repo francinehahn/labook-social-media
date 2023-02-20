@@ -117,16 +117,16 @@ export class UserBusiness {
                 throw new DuplicateId()
             }
 
-            const userFriends = await this.userDatabase.getFriendsByUserId({user_id: id, friend_id: input.friendId})
-            const friendFriends = await this.userDatabase.getFriendsByUserId({user_id: input.friendId, friend_id: id})
+            const userFriends = await this.userDatabase.getFriendsByUserId(id)
+            const alreadyFriends = userFriends.filter((item: friend) => item.user_id === input.friendId || item.friend_id === input.friendId)
             
-            if (userFriends.length > 0 || friendFriends.length > 0) {
+            if (alreadyFriends.length > 0) {
                 throw new CantAddFriend()
             }
 
-            const friendsId = generateId()
+            const friendshipId = generateId()
             const newFriend: friend = {
-                id: friendsId,
+                id: friendshipId,
                 user_id: id,
                 friend_id: input.friendId
             }
@@ -161,10 +161,10 @@ export class UserBusiness {
                 throw new FriendIdNotFound()
             }
 
-            const userFriends = await this.userDatabase.getFriendsByUserId({user_id: id, friend_id: input.friendId})
-            const friendFriends = await this.userDatabase.getFriendsByUserId({user_id: input.friendId, friend_id: id})
+            const userFriends = await this.userDatabase.getFriendsByUserId(id)
+            const notFriends = userFriends.filter((item: friend) => item.user_id === input.friendId || item.friend_id === input.friendId)
        
-            if (userFriends.length === 0 && friendFriends.length === 0) {
+            if (notFriends.length === 0) {
                 throw new CantDeleteFriend()
             }
 
@@ -199,12 +199,7 @@ export class UserBusiness {
                 throw new UserIdNotFound()
             }
 
-            const result: user[] = []
-            let userFriends = await this.userDatabase.getFriendsByUserId({user_id: input.userId})
-            userFriends.length !== 0? result.push(...userFriends) : result.push()
-            
-            userFriends = await this.userDatabase.getFriendsByUserId({friend_id: input.userId})
-            userFriends.length !== 0? result.push(...userFriends) : result.push()
+            const result = await this.userDatabase.getFriendsByUserId(input.userId)
 
             if (result.length === 0) {
                 throw new NoFriendsFound()

@@ -1,7 +1,7 @@
 import { Response, Request } from "express"
 import { UserBusiness } from "../business/UserBusiness"
-import { inputFriendDataDTO } from "../models/friend"
-import { inputLoginDTO, inputSearchUsersDTO, inputUserDTO } from "../models/user"
+import { inputFriendsByUserIdDTO, inputFriendDataDTO } from "../models/friend"
+import { inputGetUserByIdDTO, inputLoginDTO, inputSearchUsersDTO, inputUserDTO } from "../models/user"
 
 
 export class UserController {
@@ -76,12 +76,28 @@ export class UserController {
 
     getFriendsByUserId = async (req: Request, res: Response): Promise<void> => {
         try {
-            const input = {
+            const input: inputFriendsByUserIdDTO = {
                 userId: req.params.userId,
                 token: req.headers.authorization as string
             }
 
             const result = await this.userBusiness.getFriendsByUserId(input)
+            res.status(200).send(result)
+     
+        } catch (error:any) {
+            res.status(error.statusCode || 400).send(error.message || error.sqlMessage)
+        }
+    }
+
+
+    getUserById = async (req: Request, res: Response): Promise<void> => {
+        try {
+            const input: inputGetUserByIdDTO = {
+                userId: req.params.userId,
+                token: req.headers.authorization as string
+            }
+
+            const result = await this.userBusiness.getUserById(input)
             res.status(200).send(result)
      
         } catch (error:any) {

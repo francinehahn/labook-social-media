@@ -1,7 +1,7 @@
 import { CustomError } from "../errors/CustomError"
 import { CantAddFriend, CantDeleteFriend, DuplicateEmail, DuplicateId, EmailNotFound, FriendIdNotFound, IncorrectPassword, InvalidEmail, InvalidPassword, MissingEmail, MissingFriendId, MissingName, MissingPassword, MissingSearchTerm, MissingToken, MissingUserId, NoFriendsFound, NoUsersFound, UserIdNotFound } from "../errors/UserError"
-import { deleteFriendDTO, friend, getFriendsByUserIdDTO, inputFriendDataDTO } from "../models/friend"
-import { user, inputUserDTO, inputLoginDTO, inputSearchUsersDTO } from "../models/user"
+import { deleteFriendDTO, friend, inputFriendsByUserIdDTO, inputFriendDataDTO } from "../models/friend"
+import { user, inputUserDTO, inputLoginDTO, inputSearchUsersDTO, inputGetUserByIdDTO, returnUserDTO } from "../models/user"
 import { Authenticator } from "../services/Authenticator"
 import { generateId } from "../services/generateId"
 import { HashManager } from "../services/HashManager"
@@ -117,16 +117,16 @@ export class UserBusiness {
                 throw new DuplicateId()
             }
 
-            const userFriends = await this.userDatabase.getFriendsByUserId({user_id: id, friend_id: input.friendId})
-            const friendFriends = await this.userDatabase.getFriendsByUserId({user_id: input.friendId, friend_id: id})
-            
-            if (userFriends.length > 0 || friendFriends.length > 0) {
+            const userFriends = await this.userDatabase.getFriendsByUserId(id)
+            const alreadyFriends = userFriends.filter((item: friend) => item.user_id === input.friendId || item.friend_id === input.friendId)
+
+            if (alreadyFriends > 0) {
                 throw new CantAddFriend()
             }
 
-            const friendsId = generateId()
+            const friendshipId = generateId()
             const newFriend: friend = {
-                id: friendsId,
+                id: friendshipId,
                 user_id: id,
                 friend_id: input.friendId
             }
@@ -161,10 +161,10 @@ export class UserBusiness {
                 throw new FriendIdNotFound()
             }
 
-            const userFriends = await this.userDatabase.getFriendsByUserId({user_id: id, friend_id: input.friendId})
-            const friendFriends = await this.userDatabase.getFriendsByUserId({user_id: input.friendId, friend_id: id})
-       
-            if (userFriends.length === 0 && friendFriends.length === 0) {
+            const userFriends = await this.userDatabase.getFriendsByUserId(id)
+            const notFriends = userFriends.filter((item: friend) => item.user_id === input.friendId || item.friend_id === input.friendId)
+
+            if (notFriends.length === 0) {
                 throw new CantDeleteFriend()
             }
 
@@ -181,7 +181,7 @@ export class UserBusiness {
     }
 
 
-    getFriendsByUserId = async (input: getFriendsByUserIdDTO): Promise<user[]> => {
+    getFriendsByUserId = async (input: inputFriendsByUserIdDTO): Promise<returnUserDTO[]> => {
         try {
             if (!input.token) {
                 throw new MissingToken()
@@ -199,19 +199,62 @@ export class UserBusiness {
                 throw new UserIdNotFound()
             }
 
-            const result: user[] = []
-            let userFriends = await this.userDatabase.getFriendsByUserId({user_id: input.userId})
-            userFriends.length !== 0? result.push(...userFriends) : result.push()
-            
-            userFriends = await this.userDatabase.getFriendsByUserId({friend_id: input.userId})
-            userFriends.length !== 0? result.push(...userFriends) : result.push()
-
-            if (result.length === 0) {
+            const friends = await this.userDatabase.getFriendsByUserId(input.userId)
+         
+            if (friends.length === 0) {
                 throw new NoFriendsFound()
             }
 
-            return result
+            let listOfIds: string[] = []
+            for (let friend of friends) {
+                if (friend.user_id === input.userId) {
+                    listOfIds.push(friend.friend_id)
+                } else {
+                    listOfIds.push(friend.user_id)
+                }
+            }
+
+            let listOfUsers: returnUserDTO[] = []
+            for (let id of listOfIds) {
+                const user = await this.userDatabase.getUserById(id)
+                console.log(user)
+                listOfUsers.push(user)
+            }
+
+            return listOfUsers
      
+        } catch (error:any) {
+            throw new CustomError(error.statusCode, error.message)
+        }
+    }
+
+
+    getUserById = async (input: inputGetUserByIdDTO): Promise<returnUserDTO> => {
+        try {
+            if (!input.token) {
+                throw new MissingToken()
+            }
+
+            const authenticator = new Authenticator()
+            await authenticator.getTokenData(input.token)
+
+            if (input.userId === ":userId") {
+                throw new MissingUserId()
+            }
+
+            const result = await this.userDatabase.getUserById(input.userId)
+            if (!result) {
+                throw new UserIdNotFound()
+            }
+
+            const user: returnUserDTO = {
+                id: result.id,
+                name: result.name,
+                email: result.email
+            }
+
+            return user
+             
         } catch (error:any) {
             throw new CustomError(error.statusCode, error.message)
         }

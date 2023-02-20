@@ -13,6 +13,7 @@ userRouter.post("/signup", (req, res) => userController.signup(req, res))
 userRouter.post("/login", (req, res) => userController.login(req, res))
 
 userRouter.get("/", (req, res) => userController.searchUsers(req, res))
+userRouter.get("/:userId", (req, res) => userController.getUserById(req, res))
 
 userRouter.post("/friends/add", (req, res) => userController.addAfriend(req, res))
 userRouter.get("/friends/:userId", (req, res) => userController.getFriendsByUserId(req, res))

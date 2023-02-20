@@ -20,3 +20,14 @@ export interface inputSearchUsersDTO {
     search: string,
     token: string
 }
+
+export interface inputGetUserByIdDTO {
+    userId: string,
+    token: string
+}
+
+export interface returnUserDTO {
+    id: string,
+    name: string,
+    email: string
+}

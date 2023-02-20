@@ -39,9 +39,9 @@ export class UserDatabase extends BaseDatabase implements UserRepository {
     }
 
 
-    getFriendsByUserId = async (item: any): Promise<any> => {
+    getFriendsByUserId = async (id: string): Promise<any> => {
         try {
-            return await BaseDatabase.connection("labook_friends").select().where(item)
+            return await BaseDatabase.connection("labook_friends").select().where("user_id", id).orWhere("friend_id", id)
      
         } catch (error:any) {
             throw new CustomError(error.statusCode, error.message)

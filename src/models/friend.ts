@@ -14,7 +14,7 @@ export interface deleteFriendDTO {
     friendId: string
 }
 
-export interface getFriendsByUserIdDTO {
+export interface inputFriendsByUserIdDTO {
     userId: string,
     token: string
 }

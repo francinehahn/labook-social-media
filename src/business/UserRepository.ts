@@ -8,6 +8,6 @@ export interface UserRepository {
     deleteAfriend (deleteFriend: deleteFriendDTO): Promise<void>
     getUserByEmail (email: string): Promise<any>
     getUserById (id: string): Promise<any>
-    getFriendsByUserId (item: any): Promise<any>
+    getFriendsByUserId (id: string): Promise<any>
     searchUsers (search: string): Promise<user[]>
 }

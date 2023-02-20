@@ -11,6 +11,7 @@ https://documenter.getpostman.com/view/22375317/2s935mr528
 - Delete User As A Friend
 - Search Users
 - Get Friends By User Id
+- Get User By Id
 - Create Post
 - Get Post By Id
 - Get All Posts

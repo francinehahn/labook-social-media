@@ -217,7 +217,6 @@ export class UserBusiness {
             let listOfUsers: returnUserDTO[] = []
             for (let id of listOfIds) {
                 const user = await this.userDatabase.getUserById(id)
-                console.log(user)
                 listOfUsers.push(user)
             }
 

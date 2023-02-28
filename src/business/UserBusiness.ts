@@ -22,7 +22,7 @@ export class UserBusiness {
             }
 
             if (!input.password) {
-                throw new MissingEmail()
+                throw new MissingPassword()
             }
 
             if (input.password.length < 6) {

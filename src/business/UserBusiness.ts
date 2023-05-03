@@ -119,9 +119,10 @@ export class UserBusiness {
             }
 
             const userFriends = await this.userDatabase.getFriendsByUserId(id)
-            const alreadyFriends = userFriends.filter((item: friend) => item.user_id === input.friendId || item.friend_id === input.friendId)
-
-            if (alreadyFriends > 0) {
+            
+            const alreadyFriends = userFriends.filter((item: outputGetFriendsByUserIdDTO) => item.id1 === input.friendId || item.id2 === input.friendId)
+            
+            if (alreadyFriends.length > 0) {
                 throw new CantAddFriend()
             }
 
@@ -163,7 +164,7 @@ export class UserBusiness {
             }
 
             const userFriends = await this.userDatabase.getFriendsByUserId(id)
-            const notFriends = userFriends.filter((item: friend) => item.user_id === input.friendId || item.friend_id === input.friendId)
+            const notFriends = userFriends.filter((item: outputGetFriendsByUserIdDTO) => item.id1 === input.friendId || item.id2 === input.friendId)
 
             if (notFriends.length === 0) {
                 throw new CantDeleteFriend()
@@ -205,7 +206,7 @@ export class UserBusiness {
             if (friends.length === 0) {
                 throw new NoFriendsFound()
             }
-
+            
             const result: returnUserDTO[] = []
             friends.forEach((item: outputGetFriendsByUserIdDTO) => {
                 if (item.id1 !== input.userId) {

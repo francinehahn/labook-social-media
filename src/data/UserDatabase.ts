@@ -41,8 +41,12 @@ export class UserDatabase extends BaseDatabase implements UserRepository {
 
     getFriendsByUserId = async (id: string): Promise<any> => {
         try {
-            return await BaseDatabase.connection("labook_friends").select().where("user_id", id).orWhere("friend_id", id)
-     
+            return await BaseDatabase.connection("labook_friends")
+            .where('labook_friends.user_id', id)
+            .orWhere('labook_friends.friend_id', id)
+            .join("labook_users as lu", 'labook_friends.user_id', '=', 'lu.id')
+            .join("labook_users as lu2", 'labook_friends.friend_id', '=', 'lu2.id')
+            .select("lu.id as id1", "lu.name as name1", "lu.email as email1", "lu2.id as id2", "lu2.name as name2", "lu2.email as email2")
         } catch (error:any) {
             throw new CustomError(error.statusCode, error.message)
         }
@@ -73,7 +77,7 @@ export class UserDatabase extends BaseDatabase implements UserRepository {
 
     searchUsers = async (search: string): Promise<user[]> => {
         try {
-            return await BaseDatabase.connection(this.TABLE).select().where("name", "like", `%${search}%`)
+            return await BaseDatabase.connection(this.TABLE).select("id", "name", "email").where("name", "like", `%${search}%`)
             
         } catch (error:any) {
             throw new CustomError(error.statusCode, error.message)

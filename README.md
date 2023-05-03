@@ -1,10 +1,16 @@
 # Social Media - Labook
+
+## ℹ️ About
 This API Rest was developed to simulate a social media and to practice data architecture, typescript, node.js, mySQL, custom errors, authentication and cryptography.
 
-## Documentation
+In this project, when a user adds another user to their friends list, they both become friends. It is not necessary to accept any friendships and it does not matter who added who.
+
+Consequently, a user that was added by another user can delete them from their friends list.
+
+## 🔗 Documentation
 https://documenter.getpostman.com/view/22375317/2s935mr528
 
-## Endpoints
+## ☑️ Endpoints
 - Signup
 - Login
 - Add User As A Friend
@@ -21,14 +27,14 @@ https://documenter.getpostman.com/view/22375317/2s935mr528
 - Comment On A Post
 - Get Comments By Post Id
 
-## Technologies
+## 💻 Technologies
 - Typescript
 - Node.js
 - Knex.js
 - Express.js
 - MySQL
 
-## 🛰Running the project
+## 🛰 Running the project
 <pre>
   <code>git clone https://github.com/francinehahn/labook-social-media.git</code>
 </pre>

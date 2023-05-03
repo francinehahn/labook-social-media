@@ -65,7 +65,7 @@ export class PostDatabase extends BaseDatabase implements PostRepository {
         try {
             return await BaseDatabase.connection("labook_likes")
             .join("labook_users", "labook_users.id", "=", "labook_likes.user_id")
-            .select("labook_users.id", "labook_users.name", "labook_users.email")
+            .select("labook_users.id as user_id", "labook_users.name", "labook_users.email")
             .where("post_id", postId)
      
         } catch (error:any) {
@@ -96,7 +96,10 @@ export class PostDatabase extends BaseDatabase implements PostRepository {
 
     getCommentsByPostId = async (postId: string): Promise<comment[]> => {
         try {
-            return await BaseDatabase.connection("labook_comments").select().where("post_id", postId)
+            return await BaseDatabase.connection("labook_comments")
+            .join("labook_users", "labook_users.id", "=", "labook_comments.user_id")
+            .select("labook_users.id as user_id", "labook_users.name", "labook_users.email", "labook_comments.comment")
+            .where("post_id", postId)
      
         } catch (error:any) {
             throw new CustomError(error.statusCode, error.message)

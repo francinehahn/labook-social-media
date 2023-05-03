@@ -63,7 +63,10 @@ export class PostDatabase extends BaseDatabase implements PostRepository {
 
     getLikesByPostId = async (postId: string): Promise<like[]> => {
         try {
-            return await BaseDatabase.connection("labook_likes").select().where("post_id", postId)
+            return await BaseDatabase.connection("labook_likes")
+            .join("labook_users", "labook_users.id", "=", "labook_likes.user_id")
+            .select("labook_users.id", "labook_users.name", "labook_users.email")
+            .where("post_id", postId)
      
         } catch (error:any) {
             throw new CustomError(error.statusCode, error.message)

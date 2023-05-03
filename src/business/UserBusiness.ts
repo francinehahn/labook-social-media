@@ -6,6 +6,7 @@ import { Authenticator } from "../services/Authenticator"
 import { generateId } from "../services/generateId"
 import { HashManager } from "../services/HashManager"
 import { UserRepository } from "./UserRepository"
+import { outputGetFriendsByUserIdDTO } from "../models/user"
 
 
 export class UserBusiness {
@@ -205,22 +206,24 @@ export class UserBusiness {
                 throw new NoFriendsFound()
             }
 
-            let listOfIds: string[] = []
-            for (let friend of friends) {
-                if (friend.user_id === input.userId) {
-                    listOfIds.push(friend.friend_id)
+            const result: returnUserDTO[] = []
+            friends.forEach((item: outputGetFriendsByUserIdDTO) => {
+                if (item.id1 !== input.userId) {
+                    result.push({
+                        id: item.id1,
+                        name: item.name1,
+                        email: item.email1
+                    })
                 } else {
-                    listOfIds.push(friend.user_id)
+                    result.push({
+                        id: item.id2,
+                        name: item.name2,
+                        email: item.email2
+                    })
                 }
-            }
-
-            let listOfUsers: returnUserDTO[] = []
-            for (let id of listOfIds) {
-                const user = await this.userDatabase.getUserById(id)
-                listOfUsers.push(user)
-            }
-
-            return listOfUsers
+            })
+            
+            return result
      
         } catch (error:any) {
             throw new CustomError(error.statusCode, error.message)
